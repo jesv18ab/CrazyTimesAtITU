@@ -191,4 +191,83 @@ let multTable N M =
 //3.4
 // No comments needed
 let ppMultTable N M = multTable N M |> Seq.map(fun (x, y, z) -> (x.ToString() + " * " + y.ToString() + " is " + z.ToString()));;
-printfn "%A" (ppMultTable 4 4 );;
+
+
+type opr = MovePenUp
+         | MovePenDown
+         | TurnEast
+         | TurnWest
+         | TurnNorth
+         | TurnSouth
+         | Step
+
+type plot = Opr of opr
+          | Seq of plot * plot;;
+let ppOpr = function
+  | MovePenUp -> "MovePenUp"
+  | MovePenDown -> "MovePenDown"
+  | TurnEast -> "TurnEast"
+  | TurnWest -> "TurnWest"
+  | TurnNorth -> "TurnNorth"
+  | TurnSouth -> "TurnSouth"
+  | Step -> "Step";;
+
+let side = Seq(Opr MovePenDown, Seq(Opr Step, Seq(Opr Step, Opr Step)))
+let rect = Seq(Seq(Opr TurnEast, side),
+    Seq(Opr TurnNorth, Seq(side,
+    Seq(Opr TurnWest, Seq(side,
+    Seq(Opr TurnSouth, side))))));;
+  
+  
+//So what heppens actually? - Had a lot of help from the solutions on this one.
+(*
+  We take a plot as an argument. At this point a plot can either be a sequence plot tuples or an operator wit potential more sequences of operators
+  For each of the tuples we need to expand the recursion so that wer can retrieve all operators.
+  When we encounter an operator we converts it to a string using the function, constrcuted earlier
+  *)  
+  
+  let rec ppOprPlot plot =
+      match plot with
+      | Opr operator -> ppOpr operator
+      | Seq(plot1, plot2) -> ppOprPlot plot1 + " => " + ppOprPlot plot2;;
+      
+type dir =
+    | North
+    | South
+    | West
+    | East;;
+
+type pen =
+    | PenUp
+    | PenDown;;
+
+type coord = int * int;;
+type state = coord * dir * pen;;
+
+let initialState = ((0,0),East,PenUp)
+
+let goStep stateChange =
+    match stateChange with
+    |((v1,v2), East, PenUp) ->  ((v1+1, v2), East, PenUp)
+    |((v1,v2), East, PenDown) -> ((v1+1, v2), East, PenDown)
+    |((v1,v2), West, PenUp) -> ((v1-1,v2), West, PenUp)
+    |((v1,v2), West, PenDown) -> ((v1-1,v2), West, PenDown)
+    |((v1,v2), South, PenUp) -> ((v1,v2-1), South, PenUp)
+    |((v1,v2), South, PenDown) -> ((v1,v2-1), South, PenDown)
+    |((v1,v2), North, PenDown) -> ((v1,v2+1), North, PenDown)
+    |((v1,v2), North, PenUp) -> ((v1,v2+1), North, PenUp);;
+
+let addDot state coordList opr =
+    let startCoord = state |> (fun ((v1,v2), _, _) -> (v1,v2)) 
+    let newState = goStep state
+    if(opr = MovePenDown || state|>(fun (_, _, v) -> v) = PenDown ) then (startCoord::coordList, state) else (coordList, newState);;
+let (coords1,s1) = addDot initialState [] MovePenDown;;
+let (coords2,s2) = addDot s1 coords1 Step;;
+
+printfn "%A" coords1;;
+printfn "%A" s1;;
+printfn "%A" coords2;;
+printfn "%A" s2;;
+//printfn "%A" (addDot initialState [] MovePenDown);;     
+    
+      
