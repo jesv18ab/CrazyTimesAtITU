@@ -150,20 +150,21 @@ let rec f i = function
 
 let fA i xs =
     let rec fA' i acc = function
-        [] -> acc@[i]
+        |[] -> acc@[i]
         | x::xs ->  fA' (i+1) xs (i+x :: acc)
     fA' i [];;
     
     
 // 2.3
-// Continuation based solution.  
+// Continuation based solution.
+//The c is a function declaration that we define within the function itseld - Confusing concept, jeeez
 let fC i xs =
     let rec fC' i xs c =
        match xs with  
         | [] -> c [i]
         | x::xs ->  fC' (i+1) xs (fun l -> c (i+x::l))
     fC' i xs id;;    
-//printfn "%A" (f 10 [0;1;2;3])   
+printfn "%A" (fC 10 [0;1;2;3])   
 
 
 //Q3
@@ -260,14 +261,18 @@ let goStep stateChange =
 let addDot state coordList opr =
     let startCoord = state |> (fun ((v1,v2), _, _) -> (v1,v2)) 
     let newState = goStep state
-    if(opr = MovePenDown || state|>(fun (_, _, v) -> v) = PenDown ) then (startCoord::coordList, state) else (coordList, newState);;
-let (coords1,s1) = addDot initialState [] MovePenDown;;
+    let destCoord = newState |> (fun ((v1,v2), _, _) -> (v1,v2)) 
+    if(opr = MovePenDown )
+        then
+            let updatePenState = state |> (fun ((v1,v2), dir, _) -> (v1,v2), dir, PenDown) 
+            let updatedList = startCoord::coordList
+            (updatedList, updatePenState)
+    else
+        if opr <> Step || (newState|> (fun (_, _, opr) -> opr)) <> PenDown
+        then coordList, newState
+        else destCoord::coordList, newState;;
+        
+let (coords1,s1) = addDot initialState [] MovePenDown        
 let (coords2,s2) = addDot s1 coords1 Step;;
 
-printfn "%A" coords1;;
-printfn "%A" s1;;
-printfn "%A" coords2;;
-printfn "%A" s2;;
-//printfn "%A" (addDot initialState [] MovePenDown);;     
-    
       
