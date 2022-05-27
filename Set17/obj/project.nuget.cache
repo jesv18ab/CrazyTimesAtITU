@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "wtOhXNH7QnhxuZsavGHF9xPhtFyLGLYnb43zFU2fMBk07o72z81ShIcRJGkPsws8ftRmbngyxDp4dakxfq4OMQ==",
+  "success": true,
+  "projectFilePath": "C:\\ITU\\Functional programming\\OldExams\\june_2015\\examSets\\Set17\\Set17.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\jespe\\.nuget\\packages\\fsharp.core\\6.0.1\\fsharp.core.6.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
