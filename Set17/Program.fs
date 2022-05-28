@@ -132,6 +132,7 @@ let mySeq2 s1 s2 =
     for e2 in s2 do
     yield! [(e1,e2)]}
     
+ 
 let checker = mySeq2 ([1;2]|>List.toSeq) (["A"; "B"; "C"])
 
 //The alterantive way needs to be tweeked a littlæ bit . Right now it computes a list of lists, but lists that con
@@ -187,9 +188,9 @@ let numGen =
  let regTest =
     Repeat(3,Pair(StringSeq "a",
     Pair(ChoiceString["cheese";"herring";"soft drink"],
-    RangeInt(1,100))));;   
+    RangeInt(1,100))));;
+    
 let rec genValue (ds:DataSpec) =
-    let mutable counter = 1;
     match ds with
     | Repeat(i, dataSpec) -> (List.init i (fun _ -> genValue dataSpec)).ToString()
     | Pair(d1, d2) -> "(" + genValue d1 + genValue d2 + ")"
@@ -200,6 +201,7 @@ let rec genValue (ds:DataSpec) =
         let found = arr[next(1,3)]
         found
     |_ -> "";;
+    
 let rec genValueTwo data =
     match data with 
     | RangeInt (i1,i2) -> string (next (i1,i2)) 
@@ -234,7 +236,12 @@ let pickFromEnv v s e =
     | e when (Map.containsKey s e ) = false -> failwith "Error"
     | e -> next(1,v).ToString();;
    
-printfn "%A"( pickFromEnv 3 "a" sample);;
+   
+ let pickFromEnvTwo s (dEnv:Env) =
+  match Map.tryFind s dEnv with
+    Some vs -> List.item (next(0,List.length vs)) vs
+  | None -> failwith "pickFromEnv: label does not exists in environment."
+   
 
 //Remeber this approach to updating a key that leads to a list in a map.
 let addToEnvTwo name value (env: Env) = 
@@ -248,17 +255,25 @@ let addToEnvTwo name value (env: Env) =
     Pair(ChoiceString["cheese";"herring";"soft drink"],
     RangeInt(1,100))));;
  
-let rec genValueTwo dEnv ds =
-    match ds with
-    | Repeat(i, dataSpec) -> (List.init i (fun _ -> genValueTwoc dataSpec)).ToString()
-    |Pair(ds1,ds2) ->
-        let (v1',dEnv1) = genValueTwo dEnv ds1
-        let (v2',dEnv2) = genValueTwo dEnv1 ds2
-        (v1'.ToString() + dEnv1.ToString()+ ", "+ "(" + v2'.ToString() + "," + dEnv2.ToString() + ")"))
-    | RangeInt(i1,i2) ->", " + next(i1,i2).ToString()
-    | StringSeq s -> s.ToString()
-    | ChoiceString l ->
-        let arr = l|>List.toArray
-        let found = arr[next(1,3)]
-        found
-    |_ -> "";;
+let rec genValue_From_Niels dEnv = function
+    RangeInt(i1,i2) -> (next(i1,i2+1).ToString(),dEnv)
+  | ChoiceString xs -> let idx = next(0,List.length xs)
+                       (List.item idx xs,dEnv)
+  | StringSeq s -> (s + numGen().ToString(),dEnv)
+  | Pair(ds1,ds2) ->
+    let (v1',dEnv1) = genValue_From_Niels dEnv ds1
+    let (v2',dEnv2) = genValue_From_Niels dEnv1 ds2
+    ("("+v1'+","+v2'+")", dEnv2)
+  | Repeat (n,ds) ->
+    let rec iter (dEnv,vs) = function
+        0 -> (dEnv,List.rev vs)
+      | n when n>0 -> let (v',dEnv') = genValue_From_Niels dEnv ds
+                      iter (dEnv',v'::vs) (n-1)
+      | _ -> failwith "Repeat with n < 0"
+    let (dEnv',vs') = iter (dEnv,[]) n                      
+    ("[" + (String.concat ";" vs') + "]",dEnv')
+  | Pick s -> (pickFromEnvTwo s dEnv,dEnv)
+  | Label (s,ds) ->
+    let (v',dEnv') = genValue_From_Niels dEnv ds
+    (v', addToEnv s v' dEnv')
+    
