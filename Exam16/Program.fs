@@ -132,8 +132,29 @@ let pct = [((3,'A'),SCst "PCT");((3,'B'),calcPct 'B');((3,'C'),calcPct 'C');
 ((3,'G'),calcPct 'G');((3,'H'),calcPct 'H')];;
 let dice = Map.ofList (header @ result @ pct);;
 
-   
-    
+let heights =[((4,'C'),SCst "HEIGHT")
+              ((5,'C'),FCst 167.40)
+              ((6,'C'),FCst 162.30)
+              ((7,'C'),FCst 179.70)
+              ((9,'C'),FCst 169.80)
+              ];;
+let getF = function
+F f -> f
+| S s -> failwith "getF: expecting a float but got a string";;
+let evalRangeOp xs op =
+    if List.isEmpty xs then 0.0
+    else
+        match op with
+        |(Sum) -> List.fold( fun state element -> (getF element) + state )0.0 xs
+        |(Count) ->List.length xs;;
+        
+let evalArithOp v1 v2 op =
+    match op with
+    |Sub -> getF v1 - getF v2
+    |Add -> getF v1 + getF v2
+ 
+        
+
     
     
         
