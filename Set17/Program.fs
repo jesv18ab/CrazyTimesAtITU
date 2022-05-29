@@ -211,9 +211,6 @@ let rec genValueTwo data =
     | Repeat (i,d) -> (List.init i (fun non -> genValue d)).ToString ()
     | _ -> "" // Remove incomplete pattern match      
 
-        
-        
-
 
 let pur2 = Repeat(2,Pair(RangeInt(1,10), Pick "articleCode"));;
 

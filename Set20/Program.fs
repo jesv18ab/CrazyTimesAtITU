@@ -2,191 +2,165 @@
 
 open System
 
-type Rope =
- Leaf of string * int
-| Node of Rope * int * Rope;;
+type mymap<'a,'b> = MyMap of list<'a*'b>
+
+let ex1 = MyMap [('A',65);('B',66);('C',67)];;
+let ex1' = MyMap [('C',67);('A',65);('B',66)];;
+
+//TYPE: mymap<char,int>
+(*
+Both of the maps are of type mymap<char,int>, stating that the maps consists of char, int value paris in the manner of tupels
+*) 
+let dice1 = MyMap [('1',4);('2',2);('3',3);('4',2);('5',2);('6',2)];;
+let dice2 = MyMap [('1',4);('2',2);('3',3);('4',3);('5',5);('6',3)];;
+
+let emptyMap() = MyMap ([]);;
+
+let size (MyMap list) = list.Length;;
+
+let isEmpty (MyMap m) = if( m.Length = 0 ) then true else false;;
 
 
-//Q1
+let tryFind k (MyMap m) = if( m|>Map.ofList|>Map.containsKey k) then m|>Map.ofList|>Map.find k|>(fun i -> Some i) else None;;
 
-let rope1 = Node(Node(Leaf("I_lik",5),5,Leaf("e_functional_pr",15)), 20,Node(Leaf("ogr",3),3,Leaf("amming",6)));;
+let remove k (MyMap m) = m|>Map.ofList|>Map.remove k;;
 
-//1.1
-let rope2 = Node(Node(Leaf("_and",4),4,Leaf("_very",5)), 9,Node(Leaf("_much",5),5,Leaf("_F#",3)));;
-let rope3 = Node(Node(Leaf("example",8),8,Leaf("with",5)),13,Leaf(" 5_nodes",7));;
+let checkKey k (MyMap m) = Map.ofList m|>Map.containsKey k
+let mapOfList (MyMap m) = m|>Map.ofList;;
 
+let add k v (m) =
+                if( checkKey k m ) then
+                    let removed = remove k m
+                    let add = removed|>Map.add k v
+                    add
+                else mapOfList m|> Map.add k v;;
+                
+//Better solution
+let addBetter k v (MyMap m) = Map.add k v (Map.ofList m)|> Map.toList |> (fun x -> (MyMap x))
 
-//What a hack from the nternet
-let length r =
-    let rec toList r cont =
-        match r with
-        | Leaf(string, value) -> cont value
-        | Node (left,root, right) -> 
-            toList left (fun l -> 
-                toList right (fun r -> 
-                    cont (l + r)))
-    toList r id;;
+let upd f k v (m) =
+        if (checkKey k m) then
+            let v1 = mapOfList m|>Map.find k
+            let newVal = f v v1
+            add k newVal m
+        else add k v m;;    
+let map f (MyMap m) = List.map f m|>(fun x -> (MyMap x));;
+let map2 f (MyMap m) = m|>List.map f |> (fun x -> (MyMap x))
+
+let fold f s (MyMap m) = List.fold(fun state (k, v) -> f state k v ) s m;;
     
-let getVal r =
-    match(r) with
-    |Leaf(s, i) -> Some i
-    |Node(rope, i, rope1) -> None;;
+let even n = if (n % 2 = 0) then true else false;;
+let collatz n = if (even n) then n/2 else 3*n + 1;;
+
+let collatz' n = if(n <= 0) then collatz n else failwith "collatz’: n is zero or less";;
+
+let rec applyN f n N =
+    match(n,N) with
+    |(_, 0) -> []
+    |(n,N) ->(f n)::applyN f (f n) (N-1);;
     
-//Proper solution    
-let lengthSecond r  =
-    let rec inner r acc =
-        match r with
-        |Leaf(s, i) -> acc + i
-        |Node(left, i, right) -> acc + ((inner left acc ) + (inner right acc))
-    inner r 0
     
-let flatten r  =
-    let rec inner r c =
-        match r with
-        |Leaf(s, i) ->c s
-        |Node(left, i, right) ->
-            inner left (fun l -> 
-                inner right (fun r -> 
-                    c(l + r)))
-    inner r id;;
+let applyUntilOne f n =
+  let g = n
+  let rec inner f n acc =
+        match n with
+        |(1) -> if even g then acc else acc+1
+        |(n) -> inner f (f n) (acc+1)
+  inner f n 0;;
+  
+  
+  (*
+    For each recursive iteration of mySeq x is given as output. 
+    Aftwards x is applied to collatz and recursively called by MySeq.
+
+    This produces a infinite seq where collatz is applied to every result of the last iteration. 
+*)
+let rec mySeq f x =
+    seq { yield x
+          yield! mySeq f (f x)};;
     
-let flattenSecond r  =
-    let rec inner r acc =
-        match r with
-        |Leaf(s, i) -> acc + s
-        |Node(left, i, right) -> acc + ((inner left acc ) + (inner right acc))
-    inner r "";;   
+// Love these inbuilt functions - NOT EVEN PRESENT IN THE SOLUTION 
+let g x = Seq.unfold (fun acc -> Some(acc, acc*2))x
+//printfn "%A" (g 1)
 
 
+type name = string
+type quantity = float
+type date = int * int * int
+type price = float
+type transType = Buy | Sell
+type transData = date * quantity * price * transType
+type trans = name * transData;;
 
-let maxDepth r = 
-    let rec height r n = 
-        match r with
-        |Leaf(s, i) -> n
-        |Node(left, i, right ) ->
-            let g = height left n+1
-            let h = height right n+1
-            if g > h then g else h
-    height r 1;;
+
+let ts : trans list =
+[("ISS", ((24,02,2014),100.0,218.99,Buy)); ("Lego",((16,03,2015),250.0,206.72,Buy));
+("ISS", ((23,02,2016),825.0,280.23,Buy)); ("Lego",((08,03,2016),370.0,280.23,Buy));
+("ISS", ((24,02,2017),906.0,379.46,Buy)); ("Lego",((09,11,2017), 80.0,360.81,Sell));
+("ISS", ((09,11,2017),146.0,360.81,Sell)); ("Lego",((14,11,2017),140.0,376.55,Sell));
+("Lego",((20,02,2018),800.0,402.99,Buy)); ("Lego",((02,05,2018),222.0,451.80,Sell));
+("ISS", ((22,05,2018),400.0,493.60,Buy)); ("ISS", ((19,09,2018),550.0,564.00,Buy));
+("Lego",((27,03,2019),325.0,625.00,Sell)); ("ISS", ((25,11,2019),200.0,680.50,Sell));
+("Lego",((18,02,2020),300.0,720.00,Sell))];;
+
+ let addTransToMap (label,transactionList) (m:Map<name,transData list>) =
+    match Map.tryFind label m with
+        |(Some value) -> Map.add label ([transactionList]@ value) m
+        | None-> Map.add label [transactionList] m ;;
+let m1 = addTransToMap ("ISS", ((24,02,2014),100.0,218.99,Buy)) Map.empty;;
+let m2 = addTransToMap ("ISS", ((22,05,2018),400.0,493.60,Buy)) m1;;
+
+let m11 = addTransToMap ("ISS", ((24,02,2014),100.0,218.99,Buy)) Map.empty;;
+let m22 = addTransToMap ("ISS", ((22,05,2018),400.0,493.60,Buy)) m1;;
+
+//remeber that foldback is reversed.
+
+(*
+So in fold, you would have;
+List.fold.( fun accumulator element -> <-Do something->) startingValue inputList)  )
+
+In foldBack we use:
+List.foldBack( fun element accumulator -> <-Do something->) inputList StartingValue(For Acc)))
+*)
+let shares = Map.empty|>List.foldBack(fun element state -> addTransToMap element state)ts ;;
+let extract = List.fold( fun state element -> addTransToMap element state) Map.empty ts;;; 
+
+
+printfn "%A" shares;;
+
     
-let index i r =
-    let s = flatten r
-    if (i < 0 || i > s.Length) then failwith "Index out of bounce" else s[i] ;;
+//The function has type 'a list -> 'a list
+(*
+It takes a list as argument and creates a list of doubles size duplicating every entry form the first list and puts it next to the 
+entry from the original value
+*)
+
+let list = [1..10];;
+let rec dup = function
+[] -> []
+| x::xs -> x::x::dup xs;;
+
+let dupTail l =
+        let rec inner l acc =
+            match l with
+            | [] -> List.rev acc 
+            | x::xs ->inner (xs) (x::x::acc)
+        inner l [];;      
+
+let replicate2 i = seq {for _ in 1..2 -> i };;
+ //Other Soltuiona
  
-let concat r1 r2 =
-    let length = (flattenSecond r1).Length
-    Node(r1, length, r2)
+let replicate22222 i = seq {yield i; yield i}
 
-let prettyPrint r = r;;
+let replicate22 i = Seq.append (Seq.singleton i) (Seq.singleton i)
 
+let replicate222 i = Seq.ofList [i;i]
 
-let list01 = ['A'; 'B'; 'C'; 'D'; 'E'; 'F'; 'G'; 'H'; 'I'; 'J'; 'K'; 'L'; 'M';
-'N'; 'O'; 'P'; 'Q'; 'R'; 'S'; 'T'; 'U'; 'V'; 'W'; 'X'; 'Y'; 'Z']
+let inifiniteValues = Seq.initInfinite(fun i -> i);;
+let dupSeq = dup (inifiniteValues|>Seq.take 10|>Seq.toList)|>List.toSeq;;
 
-type Bucket<'a> = {
-    sizeBucket : int;
-    elems : List<'a>
-};;
-type UList<'a> = Bucket<'a> list;;    
-//This is a monomorphic type, as we can only store specific types in the tree.
-// A polymorphci type would not care, whether we were storing integers, strings, whatever.
+//Better way
+let dupSeq' = Seq.initInfinite(fun i -> [i;i])|>Seq.concat;;
 
-let ulist01 = [ { sizeBucket = 4; elems = ['A';'B';'C';'D'] };
-    { sizeBucket = 2; elems = ['E';'F'] };
-    { sizeBucket = 6; elems = ['G';'H'; 'I'; 'J'; 'K'; 'L'] };
-    { sizeBucket = 6; elems = ['M'; 'N'; 'O'; 'P'; 'Q'; 'R'] };
-    { sizeBucket = 4; elems = ['S'; 'T'; 'U'; 'V'] };
-    { sizeBucket = 4; elems = ['W'; 'X'; 'Y'; 'Z'] } ];;
+let dupSeq2 s = Seq.map(fun i -> [i;i]) s|>Seq.concat;;
 
-
-
-let ulist02 = [ { sizeBucket = 4; elems =  ['G';'H'; 'I'; 'J'; 'K'; 'L'] };
-    { sizeBucket = 2; elems = ['E';'F'] };
-    { sizeBucket = 6; elems = ['A';'B';'C';'D'] };
-    { sizeBucket = 6; elems = ['M'; 'N'; 'O'; 'P'; 'Q'; 'R'] };
-    { sizeBucket = 4; elems = ['S'; 'T'; 'U'; 'V'] };
-    { sizeBucket = 4; elems = ['W'; 'X'; 'Y'] } ];;
-
-//I switched placements for two lists in the original variable.
-//The valuation comes out false, as the instances now has a differenct ordering of the list elements, which counts under the
-//Evaluation of the boolean expression
-
-
-(*
-In the very definition of the Bucket, we state that the size porperty is of type int,
-However, the list type is unsepcifiied, allowing for
-polymorphism. However, when make a variable of the Bucket type,
-we include chars in the lements property. The compiler while recognize this and
-determine that this type variable is of type Bucket<char> list
-*)
-
-let emptyUL() : UList<'a> list= [];;;
-
-let sizeUL l = l|>List.fold( fun acc {sizeBucket=s; elems = e} -> e.Length + acc  )0;; 
-
-let isempty (ul: Bucket<'a> list) = ul.IsEmpty;;
-
-let existsUL e ul  = ul|>List.fold( fun acc {sizeBucket=s; elems = e} -> e @ acc)[]|>List.contains e
-let itemUL ul i  =
-    let acc=[]
-    let fullList = ul|>List.map( fun {sizeBucket=s; elems = e} -> e @ acc)|>List.concat
-    fullList[i];;
-
-let filterUL p ul =
-    let fullList = ul|>List.map( fun {sizeBucket=s; elems = e} -> {sizeBucket=s; elems = (e|>List.sort)})
-    let filtered = fullList|>List.map( fun {sizeBucket=s; elems = e} -> {sizeBucket=s; elems = (e|>List.filter(fun i -> i < p))})|>List.filter( fun i -> i.elems.Length > 0 )
-    filtered;;
-let checkSize ul = ul|>List.map(fun i -> i.sizeBucket = i.elems.Length && i.sizeBucket <= 4);;
-
-
-let chkUL ul = if (isempty ul = false && List.contains false (checkSize ul) <> true) then true else false;;
-
-let map f ul =
-    let updated = ul|>List.map(fun {sizeBucket=s; elems = e} -> {sizeBucket=s; elems = e|>List.map(fun i -> f i)})
-    updated;;
-    
-//Works as well    
-let fold f a ul =
-    let b = []
-    let fullList = ul|>List.map( fun {sizeBucket=s; elems = e} -> e@b)|>List.concat
-    let applyFuction = fullList|>List.fold(f)a
-    applyFuction;;
-    
-    
-//Solution from archieve    
-let foldTwo f a ul = ul|>List.fold( fun state {sizeBucket=_; elems = e} -> List.fold f state e )a;;
-                              
-                              
-//Q3
-
-//The function is tail recursive.
-
-(*
-I have implemented a accumulator, that accumula
-*)
-let GA (n, m) =
-    let rec inner (m, n) acc =
-        match (n,m) with
-         |(n,m) when n <= 0 -> (n+m)+acc
-         |(n,m) -> inner ((2*m, n-1)) (m+acc) 
-    inner (m,n) 0;;
-        
-let sequence = Seq.initInfinite(fun i -> i )|>Seq.filter(fun i -> i > 0);;     
-let mySeq =
-    seq { for e1 in sequence  do
-    for e2 in sequence do
-    yield! [(e1,e2)]};;
-
-let GA2 (m,n) = 
-    let rec helper (m,n) acc = if n <= 0 then acc + n + m else helper (2*m,n-1) (acc+m)
-    helper(m,n) 0 ;;    
-let gSeq = mySeq|>Seq.map(fun (v1,v2) -> GA2 (v1,v2));;
-
-printfn "%A" (GA(10,10))
-printfn "%A" (Seq.take 4 gSeq))
-
-
-
-    
-
-   
