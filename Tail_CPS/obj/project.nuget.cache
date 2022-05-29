@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "Twu9Y0jaAAo2Rub17aFN9SB/zmL+r/S1s/MpHbBXHQMyyfPc7XtmNh2N7a7SwvcIzQyP5OgA/p2aGp5iauGbfQ==",
+  "success": true,
+  "projectFilePath": "C:\\ITU\\Functional programming\\OldExams\\june_2015\\examSets\\Tail_CPS\\Tail_CPS.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\jespe\\.nuget\\packages\\fsharp.core\\6.0.1\\fsharp.core.6.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
